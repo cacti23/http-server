@@ -1,4 +1,5 @@
 import * as net from "net";
+import { bufPush, cutMessage, DynBuf } from "./dynBuf.ts";
 
 /**
  * Represents a TCP connection wrapper.
@@ -133,7 +134,11 @@ async function newConn(socket: net.Socket): Promise<void> {
     console.error("Error:", error);
   } finally {
     socket.destroy();
-    console.log("Connection destroyed");
+    console.log(
+      "Connection destroyed",
+      socket.remoteAddress,
+      socket.remotePort
+    );
   }
 }
 
@@ -145,17 +150,41 @@ async function newConn(socket: net.Socket): Promise<void> {
  */
 async function serveClient(socket: net.Socket): Promise<void> {
   const conn = soInit(socket);
+  const data = await soRead(conn);
+  const buf: DynBuf = { data: Buffer.alloc(0), length: 0 };
+  bufPush(buf, data);
   while (true) {
-    const data = await soRead(conn);
-    if (data.length === 0) {
-      console.log("Connection closed by client");
-      break;
+    // try to get 1 message from buffer
+    const msg = cutMessage(buf);
+    if (!msg) {
+      // need more data
+      const data = await soRead(conn);
+      if (data.length === 0) {
+        console.log(
+          "Connection closed by client",
+          socket.remoteAddress,
+          socket.remotePort
+        );
+        return;
+      }
+      bufPush(buf, data);
+      continue;
     }
 
-    console.log("data", data);
-    // to enable backpressure, we need to wait for the write to complete before reading again
-    // finite buffer are there hence
-    await soWrite(conn, data);
+    // process the message and send the response
+    if (msg.equals(Buffer.from("quit\n"))) {
+      await soWrite(conn, Buffer.from("Bye.\n"));
+      console.log(
+        "Connection closed by client",
+        socket.remoteAddress,
+        socket.remotePort
+      );
+      socket.destroy();
+      return;
+    }
+
+    const reply = Buffer.concat([Buffer.from("Echo: "), msg]);
+    await soWrite(conn, reply);
   }
 }
 
@@ -164,7 +193,7 @@ async function serveClient(socket: net.Socket): Promise<void> {
 let server = net.createServer({
   pauseOnConnect: true,
 });
-server.listen({ host: "127.0.0.1", port: 8080 });
+server.listen({ host: "127.0.0.1", port: 8000 });
 server.on("connection", newConn);
 server.on("error", (err: Error) => {
   console.error("Server error:", err);

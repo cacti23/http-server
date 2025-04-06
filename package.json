@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --loader ts-node/esm e2e.test.ts",
     "format": "prettier --write \"**/*.{js,ts}\"",
-    "start": "node --loader ts-node/esm"
+    "start": "node --loader ts-node/esm tcp-server-promise.ts"
   },
   "keywords": [],
   "author": "",

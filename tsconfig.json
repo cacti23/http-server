@@ -1,10 +1,15 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true
-  }
+    "target": "ESNext",                  // Use the latest ECMAScript features
+    "module": "ESNext",                  // Use ES modules
+    "allowImportingTsExtensions": true, // Allow importing `.ts` extensions
+    "moduleResolution": "node",         // Resolve modules in Node.js style
+    "strict": true,                      // Enable strict type checking
+    "esModuleInterop": true,             // Enable interoperability with CommonJS modules
+    "skipLibCheck": true,                // Skip type checking of declaration files
+    "forceConsistentCasingInFileNames": true, // Enforce consistent casing in imports
+    "noEmit": true // Prevent TypeScript from emitting `.js` files
+  },
+  "include": ["**/*.ts"],                // Include all `.ts` files in the project
+  "exclude": ["node_modules"]           // Exclude `node_modules` directory
 }
